@@ -260,7 +260,7 @@ public class SoundAffect extends View {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
         int desiredWidth = 500;
-        int desiredHeight = 300;
+        int desiredHeight = 200;
 
         switch (widthMode) {
             case MeasureSpec.AT_MOST: {
