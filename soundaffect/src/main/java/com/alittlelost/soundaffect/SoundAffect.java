@@ -95,6 +95,7 @@ public class SoundAffect extends View {
 
         setupPaints();
         setupUIElements();
+        populateAttributes(attrs);
 
         if (isInEditMode()) {
             return;
@@ -103,8 +104,6 @@ public class SoundAffect extends View {
         this.context = context;
         this.attributeSet = attrs;
         this.mediaManager = new MediaManager(context);
-
-        populateAttributes(attrs);
 
         if (trackResourceId != -1) {
             loadResource(trackResourceId);
@@ -152,10 +151,10 @@ public class SoundAffect extends View {
         pauseButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pause_circle_outline_black_24dp);
         pauseButtonImage = Bitmap.createScaledBitmap(pauseButtonImage, pauseButtonImage.getWidth() * 2, pauseButtonImage.getHeight() * 2, false);
 
-        if (showPrevButton) {
+        //if (showPrevButton) {
             prevButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_skip_previous_black_24dp);
             prevButtonImage = Bitmap.createScaledBitmap(prevButtonImage, prevButtonImage.getWidth() * 2, prevButtonImage.getHeight() * 2, false);
-        }
+        //}
 
         if (attrNameToIndexMap.containsKey(ATTR_PADDING)) {
             int dp = attributeSet.getAttributeIntValue(attrNameToIndexMap.get(ATTR_PADDING), -1);
@@ -317,6 +316,9 @@ public class SoundAffect extends View {
             canvas.drawRect(seekbarRect, seekPaint);
             canvas.drawRect(seekNotchRect, notchPaint);
             canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+            if (showPrevButton) {
+                canvas.drawBitmap(prevButtonImage, prevButtonRect.left, prevButtonRect.top, buttonPaint);
+            }
             return;
         }
 
