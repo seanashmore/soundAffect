@@ -15,8 +15,5 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         soundAffect = findViewById(R.id.soundAffect);
-        //soundAffect.loadUrl("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
-        //soundAffect.loadResource(R.raw.sound_4);
-        //soundAffect.play();
     }
 }

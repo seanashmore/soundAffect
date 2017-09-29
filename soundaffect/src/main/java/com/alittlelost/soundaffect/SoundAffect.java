@@ -86,9 +86,20 @@ public class SoundAffect extends View {
     };
 
     //TODO: make normal constructor here that takes context and passes default set of attrs
+    public SoundAffect(Context context) {
+        super(context);
+    }
 
     public SoundAffect(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+
+        setupPaints();
+        setupUIElements();
+
+        if (isInEditMode()) {
+            return;
+        }
+
         this.context = context;
         this.attributeSet = attrs;
         this.mediaManager = new MediaManager(context);
@@ -98,9 +109,6 @@ public class SoundAffect extends View {
         if (trackResourceId != -1) {
             loadResource(trackResourceId);
         }
-
-        setupPaints();
-        setupUIElements();
     }
 
     private void populateAttributes(AttributeSet attrs) {
@@ -156,6 +164,10 @@ public class SoundAffect extends View {
                 int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics());
                 setPadding(px, px, px, px);
             }
+        }
+
+        if (isInEditMode()) {
+            return;
         }
 
         //Runnables + touch detection
@@ -256,15 +268,57 @@ public class SoundAffect extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
-        Log.i(TAG, "Measured width: " + width + " height: " + height);
+        int desiredWidth = 500;
+        int desiredHeight = 300;
+
+        switch (widthMode) {
+            case MeasureSpec.AT_MOST: {
+                width = Math.min(desiredWidth, width);
+                break;
+            }
+            case MeasureSpec.EXACTLY: {
+                break;
+            }
+            case MeasureSpec.UNSPECIFIED: {
+                width = desiredWidth;
+                break;
+            }
+        }
+
+        switch (heightMode) {
+            case MeasureSpec.AT_MOST: {
+                height = Math.min(desiredHeight, height);
+                break;
+            }
+            case MeasureSpec.EXACTLY: {
+                break;
+            }
+            case MeasureSpec.UNSPECIFIED: {
+                height = desiredHeight;
+                break;
+            }
+        }
+
         setMeasuredDimension(width, height);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        if (isInEditMode()) {
+            canvas.drawColor(Color.WHITE);
+            canvas.drawText(getFormattedDuration(), canvas.getWidth() - textPaint.measureText(getFormattedDuration()), textSize, textPaint);
+            canvas.drawText(getCurrentTime(), 0, textSize, textPaint);
+            canvas.drawRect(seekbarRect, seekPaint);
+            canvas.drawRect(seekNotchRect, notchPaint);
+            canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+            return;
+        }
 
         canvas.drawColor(Color.WHITE);
 
@@ -322,6 +376,10 @@ public class SoundAffect extends View {
     }
 
     private String getFormattedDuration() {
+        if (isInEditMode()) {
+            return "01:00";
+        }
+
         return String.format(Locale.getDefault(), "%02d:%02d",
                 TimeUnit.MILLISECONDS.toMinutes(mediaManager.getDuration()),
                 TimeUnit.MILLISECONDS.toSeconds(mediaManager.getDuration()) -
@@ -330,6 +388,10 @@ public class SoundAffect extends View {
     }
 
     private String getCurrentTime() {
+        if (isInEditMode()) {
+            return "00:00";
+        }
+
         return String.format(Locale.getDefault(), "%02d:%02d",
                 TimeUnit.MILLISECONDS.toMinutes(mediaManager.getCurrentPosition()),
                 TimeUnit.MILLISECONDS.toSeconds(mediaManager.getCurrentPosition()) -
