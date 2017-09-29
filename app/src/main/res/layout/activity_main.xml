@@ -38,8 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:padding="16dp"
-        app:showPrevButton="true"
+        app:showPrevButton="false"
         app:trackResource="@raw/test" />
 
 </LinearLayout>

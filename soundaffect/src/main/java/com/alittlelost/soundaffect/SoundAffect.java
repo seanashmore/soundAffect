@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -34,6 +33,10 @@ public class SoundAffect extends View {
     private final String ATTR_TRACK_RESOURCE = "trackResource";
     private final String ATTR_SHOW_PREV_BUTTON = "showPrevButton";
 
+    private final int SEEK_AND_NOTCH_THICKNESS = 5;
+    private final int SEEK_NOTCH_HEIGHT = 20;
+    private final int TIMESTAMP_MARGIN_BOTTOM = 20;
+
     private Context context;
 
     //Handler & thread to update current track position
@@ -43,22 +46,16 @@ public class SoundAffect extends View {
 
     //Paint to draw UI elements and debugging
     private Paint textPaint, buttonPaint, seekPaint, notchPaint, debugPaint;
-    private float textSize;
 
     //Bitmaps for audio controls
     private Bitmap playButtonImage, pauseButtonImage, prevButtonImage;
-    private Rect playPauseButtonRect, prevButtonRect;
-    private Rect seekbarRect, seekNotchRect;
+    private Rect playPauseButtonRect, prevButtonRect, seekbarRect, seekNotchRect;
 
     private Rect tapRect;
 
     private MediaManager mediaManager;
 
     private HashMap<String, Integer> attrNameToIndexMap = new HashMap<>();
-    private AttributeSet attributeSet;
-
-    //Android attrs
-    private int padding;
 
     //App attrs
     private int trackResourceId;
@@ -99,7 +96,6 @@ public class SoundAffect extends View {
         }
 
         this.context = context;
-        this.attributeSet = attrs;
         this.mediaManager = new MediaManager(context);
 
         if (trackResourceId != -1) {
@@ -123,7 +119,6 @@ public class SoundAffect extends View {
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(Color.BLACK);
         textPaint.setTextSize(50.0f);
-        textSize = textPaint.getTextSize();
 
         buttonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         buttonPaint.setColor(Color.WHITE);
@@ -143,13 +138,13 @@ public class SoundAffect extends View {
 
     private void setupUIElements() {
         playButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_play_circle_outline_black_24dp);
-        playButtonImage = Bitmap.createScaledBitmap(playButtonImage, playButtonImage.getWidth() * 2, playButtonImage.getHeight() * 2, false);
+        //playButtonImage = Bitmap.createScaledBitmap(playButtonImage, playButtonImage.getWidth() * 2, playButtonImage.getHeight() * 2, false);
 
         pauseButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pause_circle_outline_black_24dp);
-        pauseButtonImage = Bitmap.createScaledBitmap(pauseButtonImage, pauseButtonImage.getWidth() * 2, pauseButtonImage.getHeight() * 2, false);
+        //pauseButtonImage = Bitmap.createScaledBitmap(pauseButtonImage, pauseButtonImage.getWidth() * 2, pauseButtonImage.getHeight() * 2, false);
 
         prevButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_skip_previous_black_24dp);
-        prevButtonImage = Bitmap.createScaledBitmap(prevButtonImage, prevButtonImage.getWidth() * 2, prevButtonImage.getHeight() * 2, false);
+        //prevButtonImage = Bitmap.createScaledBitmap(prevButtonImage, prevButtonImage.getWidth() * 2, prevButtonImage.getHeight() * 2, false);
 
         if (isInEditMode()) {
             return;
@@ -164,27 +159,38 @@ public class SoundAffect extends View {
     }
 
     private void setupDrawingPositions() {
-        int seekLeft = 20;
-        int seekTop = (int) textSize * 2;
-        int seekRight = getWidth() - 20;
-        int seekBottom = seekTop + 5;
+        int seekLeft = getPaddingLeft();
+        int seekTop = getHeightWithPadding() / 3;
+        int seekRight = getWidthWithPadding();
+        int seekBottom = seekTop + SEEK_AND_NOTCH_THICKNESS;
 
-        int centerLeft = (getWidth() / 2) - (playButtonImage.getWidth() / 2);
-        int centerTop = (int) textSize * 3;
+        int centerLeft = (getWidthWithPadding() / 2) - (playButtonImage.getWidth() / 2);
+        int centerTop = getHeightWithPadding() / 2;
         seekbarRect = new Rect(seekLeft, seekTop, seekRight, seekBottom);
 
         int notchLeft = seekLeft;
-        int notchTop = seekTop - 30;
-        int notchRight = notchLeft + 5;
-        int notchBottom = seekTop + 30 + seekbarRect.height();
+        int notchTop = seekTop - SEEK_NOTCH_HEIGHT;
+        int notchRight = notchLeft + SEEK_AND_NOTCH_THICKNESS;
+        int notchBottom = seekTop + SEEK_NOTCH_HEIGHT + seekbarRect.height();
         seekNotchRect = new Rect(notchLeft, notchTop, notchRight, notchBottom);
 
-        playPauseButtonRect = new Rect(centerLeft, centerTop, centerLeft + playButtonImage.getWidth(), centerTop + playButtonImage.getHeight());
+        playPauseButtonRect = new Rect(centerLeft, centerTop,
+                centerLeft + playButtonImage.getWidth(),
+                centerTop + playButtonImage.getHeight());
 
         if (showPrevButton) {
             int left = centerLeft - prevButtonImage.getWidth();
-            prevButtonRect = new Rect(left, centerTop, left + playButtonImage.getWidth(), centerTop + playButtonImage.getHeight());
+            prevButtonRect = new Rect(left, centerTop, left + playButtonImage.getWidth(),
+                    centerTop + playButtonImage.getHeight());
         }
+    }
+
+    private int getWidthWithPadding() {
+        return getWidth() + getPaddingLeft() - getPaddingRight();
+    }
+
+    private int getHeightWithPadding() {
+        return getHeight() + getPaddingTop() - getPaddingBottom();
     }
 
     private void updateNotchRect(int percent) {
@@ -214,10 +220,6 @@ public class SoundAffect extends View {
 
     private void loadResource(int resourceId) {
         mediaManager.loadResource(resourceId);
-    }
-
-    public void setOnCompletionListener(MediaPlayer.OnCompletionListener onCompletionListener) {
-        mediaManager.setOnCompletionListener(onCompletionListener);
     }
 
     public void togglePlayPause() {
@@ -295,33 +297,21 @@ public class SoundAffect extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (isInEditMode()) {
-            canvas.drawColor(Color.WHITE);
-            canvas.drawText(getFormattedDuration(), canvas.getWidth() - textPaint.measureText(getFormattedDuration()), textSize, textPaint);
-            canvas.drawText(getCurrentTime(), 0, textSize, textPaint);
-            canvas.drawRect(seekbarRect, seekPaint);
-            canvas.drawRect(seekNotchRect, notchPaint);
-            canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
-            if (showPrevButton) {
-                canvas.drawBitmap(prevButtonImage, prevButtonRect.left, prevButtonRect.top, buttonPaint);
-            }
-            return;
-        }
-
         canvas.drawColor(Color.WHITE);
+        drawTimestamps(canvas);
+        drawSeekBar(canvas);
+        drawControls(canvas);
+    }
 
-        //Total duration to right
-        canvas.drawText(getFormattedDuration(), canvas.getWidth() - textPaint.measureText(getFormattedDuration()), textSize, textPaint);
-        //Current position to left
-        canvas.drawText(getCurrentTime(), 0, textSize, textPaint);
-
-        canvas.drawRect(seekbarRect, seekPaint);
-        canvas.drawRect(seekNotchRect, notchPaint);
-
-        if (mediaManager.isPlaying()) {
-            canvas.drawBitmap(pauseButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
-        } else {
+    private void drawControls(Canvas canvas) {
+        if (isInEditMode()) {
             canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+        } else {
+            if (mediaManager.isPlaying()) {
+                canvas.drawBitmap(pauseButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+            } else {
+                canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+            }
         }
 
         if (showPrevButton) {
@@ -329,16 +319,25 @@ public class SoundAffect extends View {
         }
     }
 
+    private void drawSeekBar(Canvas canvas) {
+        canvas.drawRect(seekbarRect, seekPaint);
+        canvas.drawRect(seekNotchRect, notchPaint);
+    }
+
+    private void drawTimestamps(Canvas canvas) {
+        canvas.drawText(getFormattedDuration(), seekbarRect.right - textPaint.measureText(getFormattedDuration()),
+                seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM,
+                textPaint);
+
+        canvas.drawText(getCurrentTime(), seekbarRect.left,
+                seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM, textPaint);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             int x = (int) event.getX();
             int y = (int) event.getY();
-
-            Log.i(TAG, "X = " + x + " && Y = " + y);
-            Log.i(TAG, "L = " + playPauseButtonRect.left + " T = " + playPauseButtonRect.top
-                    + " R = " + (playPauseButtonRect.left + playPauseButtonRect.width())
-                    + " B = " + (playPauseButtonRect.top + playPauseButtonRect.height()));
 
             tapRect.left = x;
             tapRect.top = y;
