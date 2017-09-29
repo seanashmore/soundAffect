@@ -1,7 +1,6 @@
 package com.alittlelost.soundaffect;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -15,7 +14,6 @@ import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -35,7 +33,6 @@ public class SoundAffect extends View {
     private final String APP_NS = "http://schemas.android.com/apk/res-auto";
     private final String ATTR_TRACK_RESOURCE = "trackResource";
     private final String ATTR_SHOW_PREV_BUTTON = "showPrevButton";
-    private final String ATTR_PADDING = "padding";
 
     private Context context;
 
@@ -151,19 +148,8 @@ public class SoundAffect extends View {
         pauseButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pause_circle_outline_black_24dp);
         pauseButtonImage = Bitmap.createScaledBitmap(pauseButtonImage, pauseButtonImage.getWidth() * 2, pauseButtonImage.getHeight() * 2, false);
 
-        //if (showPrevButton) {
-            prevButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_skip_previous_black_24dp);
-            prevButtonImage = Bitmap.createScaledBitmap(prevButtonImage, prevButtonImage.getWidth() * 2, prevButtonImage.getHeight() * 2, false);
-        //}
-
-        if (attrNameToIndexMap.containsKey(ATTR_PADDING)) {
-            int dp = attributeSet.getAttributeIntValue(attrNameToIndexMap.get(ATTR_PADDING), -1);
-            if (dp != -1) {
-                Resources r = getResources();
-                int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics());
-                setPadding(px, px, px, px);
-            }
-        }
+        prevButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_skip_previous_black_24dp);
+        prevButtonImage = Bitmap.createScaledBitmap(prevButtonImage, prevButtonImage.getWidth() * 2, prevButtonImage.getHeight() * 2, false);
 
         if (isInEditMode()) {
             return;
