@@ -34,7 +34,7 @@ public class SoundAffect extends View {
     private final String ATTR_SHOW_PREV_BUTTON = "showPrevButton";
 
     private final int SEEK_AND_NOTCH_THICKNESS = 5;
-    private final int SEEK_NOTCH_HEIGHT = 20;
+    private final int SEEK_NOTCH_HEIGHT = 10;
     private final int TIMESTAMP_MARGIN_BOTTOM = 20;
 
     private Context context;
@@ -204,9 +204,9 @@ public class SoundAffect extends View {
             notchLeft = seekbarRect.right;
         }
 
-        notchTop = seekbarRect.top - 30;
-        notchRight = notchLeft + 5;
-        notchBottom = seekbarRect.top + 30 + seekbarRect.height();
+        notchTop = seekbarRect.top - SEEK_NOTCH_HEIGHT;
+        notchRight = notchLeft + SEEK_AND_NOTCH_THICKNESS;
+        notchBottom = seekbarRect.top + SEEK_NOTCH_HEIGHT + seekbarRect.height();
 
         seekNotchRect.left = notchLeft;
         seekNotchRect.top = notchTop;
