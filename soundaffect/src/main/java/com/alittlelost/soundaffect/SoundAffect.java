@@ -36,6 +36,7 @@ public class SoundAffect extends View {
     private final int SEEK_AND_NOTCH_THICKNESS = 5;
     private final int SEEK_NOTCH_HEIGHT = 10;
     private final int TIMESTAMP_MARGIN_BOTTOM = 20;
+    private final int NOTCH_TOUCH_THICKNESS = 100;
 
     private Context context;
 
@@ -49,7 +50,7 @@ public class SoundAffect extends View {
 
     //Bitmaps for audio controls
     private Bitmap playButtonImage, pauseButtonImage, prevButtonImage;
-    private Rect playPauseButtonRect, prevButtonRect, seekbarRect, seekNotchRect, seekTouchRect, tapRect;
+    private Rect playPauseButtonRect, prevButtonRect, seekbarRect, seekNotchRect, notchTouchRect, tapRect;
 
     private MediaManager mediaManager;
 
@@ -169,7 +170,7 @@ public class SoundAffect extends View {
         int notchRight = notchLeft + SEEK_AND_NOTCH_THICKNESS;
         int notchBottom = seekTop + SEEK_NOTCH_HEIGHT + seekbarRect.height();
         seekNotchRect = new Rect(notchLeft, notchTop, notchRight, notchBottom);
-        seekTouchRect = new Rect(seekNotchRect.left, seekNotchRect.top, seekNotchRect.right, seekNotchRect.bottom);
+        updateNotchTouchRect(seekNotchRect);
 
         playPauseButtonRect = new Rect(centerLeft, centerTop,
                 centerLeft + playButtonImage.getWidth(),
@@ -190,12 +191,16 @@ public class SoundAffect extends View {
         return getHeight() + getPaddingTop() - getPaddingBottom();
     }
 
-    private void updateNotchTouchRect(Rect seekNotchRect) {
-        seekTouchRect.left = seekNotchRect.left - 30;
-        seekTouchRect.right = seekNotchRect.right + 30;
-        seekTouchRect.top = seekNotchRect.top - 30;
-        seekTouchRect.bottom = seekNotchRect.bottom + 30;
-        Log.i(TAG, "Update touch rect: " + seekTouchRect);
+    private void updateNotchTouchRect(Rect notchRect) {
+        if (notchTouchRect == null) {
+            notchTouchRect = new Rect();
+        }
+
+        notchTouchRect.left = notchRect.left - NOTCH_TOUCH_THICKNESS / 2;
+        notchTouchRect.right = notchRect.right + NOTCH_TOUCH_THICKNESS / 2;
+        notchTouchRect.top = notchRect.top - NOTCH_TOUCH_THICKNESS / 2;
+        notchTouchRect.bottom = notchRect.bottom + NOTCH_TOUCH_THICKNESS / 2;
+        Log.i(TAG, "Update touch rect: " + notchTouchRect);
     }
 
     private void moveNotchRect(float left) {
@@ -210,6 +215,7 @@ public class SoundAffect extends View {
         seekNotchRect.left = Math.round(left);
         seekNotchRect.right = seekNotchRect.left + SEEK_AND_NOTCH_THICKNESS;
         updateNotchTouchRect(seekNotchRect);
+        updateCurrentPosition();
         invalidate();
     }
 
@@ -323,7 +329,7 @@ public class SoundAffect extends View {
         drawTimestamps(canvas);
         drawSeekBar(canvas);
         drawControls(canvas);
-        //drawDebug(canvas);
+        drawDebug(canvas);
     }
 
     private void drawControls(Canvas canvas) {
@@ -357,7 +363,7 @@ public class SoundAffect extends View {
     }
 
     private void drawDebug(Canvas canvas) {
-        canvas.drawRect(seekTouchRect, debugPaint);
+        canvas.drawRect(notchTouchRect, debugPaint);
     }
 
     @Override
@@ -385,13 +391,16 @@ public class SoundAffect extends View {
                 }
             }
 
-            if (seekTouchRect.contains(tapRect)) {
+            if (notchTouchRect.contains(tapRect)) {
                 if (mediaManager.isPlaying()) {
                     wasPlayingBeforeSeek = true;
                 }
 
                 isSeeking = true;
-                mediaManager.pause();
+
+                if (mediaManager.isPlaying()) {
+                    pause();
+                }
             }
         }
 
@@ -399,15 +408,7 @@ public class SoundAffect extends View {
             if (isSeeking) {
                 isSeeking = false;
 
-                //work out current location / timestamp
-                float currentNotchPos = seekNotchRect.left;
-                float seekEnd = seekbarRect.right;
-                float percentage = (currentNotchPos / seekEnd) * 100.0f;
-                float duration = mediaManager.getDuration();
-                float newPos = (duration / 100.0f) * percentage;
-
-                //Update the mediaPlayer and start playback from that point
-                mediaManager.setCurrentPosition(Math.round(newPos));
+                updateCurrentPosition();
 
                 if (wasPlayingBeforeSeek) {
                     mediaManager.play();
@@ -425,6 +426,24 @@ public class SoundAffect extends View {
         }
 
         return true;
+    }
+
+    //Work out current track position based on the current position of the 'notch'
+    //relative to the seekBarRect
+    private void updateCurrentPosition() {
+        if (mediaManager.isPrepared()) {
+
+            float currentNotchPos = seekNotchRect.left;
+            float seekEnd = seekbarRect.right;
+            float percentage = (currentNotchPos / seekEnd) * 100.0f;
+            float duration = mediaManager.getDuration();
+            float newPos = (duration / 100.0f) * percentage;
+
+            //Update the mediaPlayer and start playback from that point
+            mediaManager.setCurrentPosition(Math.round(newPos));
+        } else {
+            Log.i(TAG, "Not prepared!!");
+        }
     }
 
     private String getFormattedDuration() {

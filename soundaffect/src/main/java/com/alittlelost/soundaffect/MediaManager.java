@@ -18,6 +18,8 @@ public class MediaManager {
     private MediaPlayer mediaPlayer;
     private Context context;
 
+    private boolean prepared = false;
+
     public MediaManager(Context context) {
         this.context = context;
     }
@@ -43,6 +45,16 @@ public class MediaManager {
 
     public void loadResource(int resourceId) {
         mediaPlayer = MediaPlayer.create(context, resourceId);
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                prepared = true;
+            }
+        });
+    }
+
+    public boolean isPrepared() {
+        return prepared;
     }
 
     public void setOnCompletionListener(MediaPlayer.OnCompletionListener onCompletionListener) {
