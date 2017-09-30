@@ -53,6 +53,10 @@ public class MediaManager {
         return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
     }
 
+    public void setCurrentPosition(int currentPosition) {
+        mediaPlayer.seekTo(currentPosition);
+    }
+
     public void reset() {
         mediaPlayer.seekTo(0);
     }
