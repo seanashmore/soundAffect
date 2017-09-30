@@ -3,5 +3,6 @@
     <declare-styleable name="SoundAffect">
         <attr name="trackResource" format="integer" />
         <attr name="showPrevButton" format="boolean" />
+        <attr name="positionIndicatorShape" format="string" /> <!-- Notch (Vertical line) / Dot (Filled circle) -->
     </declare-styleable>
 </resources>

@@ -32,12 +32,16 @@ public class SoundAffect extends View {
     private final String APP_NS = "http://schemas.android.com/apk/res-auto";
     private final String ATTR_TRACK_RESOURCE = "trackResource";
     private final String ATTR_SHOW_PREV_BUTTON = "showPrevButton";
+    private final String ATTR_INDICATOR_SHAPE = "positionIndicatorShape";
+    private final String INDICATOR_DOT = "dot";
+    private final String INDICATOR_NOTCH = "notch";
 
     private final int SEEK_AND_NOTCH_THICKNESS = 5;
     private final int SEEK_NOTCH_HEIGHT = 10;
     private final int TIMESTAMP_MARGIN_BOTTOM = 20;
     private final int NOTCH_TOUCH_THICKNESS = 100;
     private final int SEEK_BAR_TOUCH_THICKNESS = 100;
+    private final float SEEK_NOTCH_DOT_RADIUS = 15.0f;
 
     private Context context;
 
@@ -64,6 +68,7 @@ public class SoundAffect extends View {
     //App attrs
     private int trackResourceId;
     private boolean showPrevButton;
+    private String positionIndicatorShape;
 
     private Runnable currentPositionRunnable = new Runnable() {
         @Override
@@ -113,6 +118,10 @@ public class SoundAffect extends View {
 
         trackResourceId = attrs.getAttributeResourceValue(APP_NS, ATTR_TRACK_RESOURCE, -1);
         showPrevButton = attrs.getAttributeBooleanValue(APP_NS, ATTR_SHOW_PREV_BUTTON, false);
+
+        if (attrNameToIndexMap.containsKey(ATTR_INDICATOR_SHAPE)) {
+            positionIndicatorShape = attrs.getAttributeValue(attrNameToIndexMap.get(ATTR_INDICATOR_SHAPE));
+        }
     }
 
     private void setupPaints() {
@@ -341,7 +350,7 @@ public class SoundAffect extends View {
         drawTimestamps(canvas);
         drawSeekBar(canvas);
         drawControls(canvas);
-        drawDebug(canvas);
+        //drawDebug(canvas);
     }
 
     private void drawControls(Canvas canvas) {
@@ -362,7 +371,13 @@ public class SoundAffect extends View {
 
     private void drawSeekBar(Canvas canvas) {
         canvas.drawRect(seekbarRect, seekPaint);
-        canvas.drawRect(notchRect, notchPaint);
+
+        if (positionIndicatorShape != null && positionIndicatorShape.equals(INDICATOR_DOT)) {
+            canvas.drawCircle(notchRect.left + notchRect.width() / 2,
+                    notchRect.top + notchRect.height() / 2, SEEK_NOTCH_DOT_RADIUS, notchPaint);
+        } else {
+            canvas.drawRect(notchRect, notchPaint);
+        }
     }
 
     private void drawTimestamps(Canvas canvas) {
