@@ -177,7 +177,7 @@ public class SoundAffect extends View {
                 centerTop + playButtonImage.getHeight());
 
         if (showPrevButton) {
-            int left = centerLeft - prevButtonImage.getWidth();
+            int left = (int) (centerLeft - Math.round(prevButtonImage.getWidth() * 1.5));
             prevButtonRect = new Rect(left, centerTop, left + playButtonImage.getWidth(),
                     centerTop + playButtonImage.getHeight());
         }
@@ -270,9 +270,15 @@ public class SoundAffect extends View {
     }
 
     public void reset() {
-        pause();
-        mediaManager.reset();
-        play();
+        if (mediaManager.isPlaying()) {
+            pause();
+            mediaManager.reset();
+            play();
+        } else {
+            mediaManager.reset();
+            updateNotchRect(getPercentageComplete());
+            invalidate();
+        }
     }
 
     @Override
