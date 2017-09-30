@@ -36,7 +36,7 @@ public class SoundAffect extends View {
     private final String INDICATOR_DOT = "dot";
     private final String INDICATOR_NOTCH = "notch";
 
-    private final int SEEK_AND_NOTCH_THICKNESS = 5;
+    private final int SEEK_AND_NOTCH_THICKNESS = 10;
     private final int SEEK_NOTCH_HEIGHT = 10;
     private final int TIMESTAMP_MARGIN_BOTTOM = 20;
     private final int NOTCH_TOUCH_THICKNESS = 100;

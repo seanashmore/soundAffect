@@ -39,6 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         app:showPrevButton="true"
-        app:trackResource="@raw/test" />
+        app:trackResource="@raw/test"
+        app:positionIndicatorShape="notch"/>
 
 </LinearLayout>
