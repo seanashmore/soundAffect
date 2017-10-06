@@ -257,7 +257,7 @@ public class SoundAffect extends View {
         updateNotchTouchRect(notchRect);
     }
 
-    private void loadUrl(String url) {
+    public void loadUrl(String url) {
         mediaManager.loadUrl(url);
     }
 
