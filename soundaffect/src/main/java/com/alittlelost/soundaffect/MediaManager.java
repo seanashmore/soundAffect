@@ -29,12 +29,14 @@ public class MediaManager {
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setDataSource(url);
 
-            AudioAttributes.Builder audioAttributes = new AudioAttributes.Builder();
-            audioAttributes.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
-            audioAttributes.setLegacyStreamType(AudioManager.STREAM_MUSIC);
-            audioAttributes.setUsage(AudioAttributes.USAGE_MEDIA);
-
-            mediaPlayer.setAudioAttributes(audioAttributes.build());
+            AudioAttributes.Builder audioAttributes;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                audioAttributes = new AudioAttributes.Builder();
+                audioAttributes.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
+                audioAttributes.setLegacyStreamType(AudioManager.STREAM_MUSIC);
+                audioAttributes.setUsage(AudioAttributes.USAGE_MEDIA);
+                mediaPlayer.setAudioAttributes(audioAttributes.build());
+            }
             mediaPlayer.prepare();
         } catch (IOException e) {
             Log.e(TAG, "IOException when playing from URL: " + e);
@@ -55,10 +57,6 @@ public class MediaManager {
 
     public boolean isPrepared() {
         return prepared;
-    }
-
-    public void setOnCompletionListener(MediaPlayer.OnCompletionListener onCompletionListener) {
-        mediaPlayer.setOnCompletionListener(onCompletionListener);
     }
 
     public int getCurrentPosition() {
