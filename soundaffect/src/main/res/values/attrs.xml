@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="SoundAffect">
+    <declare-styleable name="sound_affect">
         <attr name="trackResource" format="integer" />
         <attr name="showPrevButton" format="boolean" />
         <attr name="positionIndicatorShape" format="string" /> <!-- Notch (Vertical line) / Dot (Filled circle) -->
+        <attr name="positionIndicatorColor" format="color" />
+        <attr name="seekBarColor" format="color" />
+        <attr name="playButtonColor" format="color" />
+        <attr name="prevButtonColor" format="color" />
     </declare-styleable>
 </resources>

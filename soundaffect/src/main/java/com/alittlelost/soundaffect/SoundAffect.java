@@ -1,11 +1,14 @@
 package com.alittlelost.soundaffect;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -17,7 +20,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -28,11 +30,6 @@ import java.util.concurrent.TimeUnit;
 public class SoundAffect extends View {
 
     private static final String TAG = "SoundAffect";
-    private final String ANDROID_NS = "http://schemas.android.com/apk/res/android";
-    private final String APP_NS = "http://schemas.android.com/apk/res-auto";
-    private final String ATTR_TRACK_RESOURCE = "trackResource";
-    private final String ATTR_SHOW_PREV_BUTTON = "showPrevButton";
-    private final String ATTR_INDICATOR_SHAPE = "positionIndicatorShape";
     private final String INDICATOR_DOT = "dot";
     private final String INDICATOR_NOTCH = "notch";
 
@@ -51,7 +48,7 @@ public class SoundAffect extends View {
     private Handler mainThreadHandler;
 
     //Paint to draw UI elements and debugging
-    private Paint textPaint, buttonPaint, seekPaint, notchPaint, debugPaint;
+    private Paint textPaint, playButtonPaint, prevButtonPaint, seekPaint, notchPaint, debugPaint;
 
     //Bitmaps for audio controls
     private Bitmap playButtonImage, pauseButtonImage, prevButtonImage;
@@ -61,14 +58,12 @@ public class SoundAffect extends View {
 
     private MediaManager mediaManager;
 
-    private HashMap<String, Integer> attrNameToIndexMap = new HashMap<>();
-
     private boolean isSeeking, wasPlayingBeforeSeek = false;
 
     //App attrs
-    private int trackResourceId;
-    private boolean showPrevButton;
-    private String positionIndicatorShape;
+    private int trackResourceId, positionIndicatorColor, seekBarColor, playButtonColor, prevButtonColor = -1;
+    private boolean showPrevButton = false;
+    private String positionIndicatorShape = INDICATOR_NOTCH;
 
     private Runnable currentPositionRunnable = new Runnable() {
         @Override
@@ -92,9 +87,9 @@ public class SoundAffect extends View {
     public SoundAffect(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
+        populateAttributes(context, attrs);
         setupPaints();
         setupUIElements();
-        populateAttributes(attrs);
 
         if (isInEditMode()) {
             return;
@@ -108,19 +103,20 @@ public class SoundAffect extends View {
         }
     }
 
-    private void populateAttributes(AttributeSet attrs) {
-        //Populate the map
-        if (attrs != null) {
-            for (int i = 0; i < attrs.getAttributeCount(); i++) {
-                attrNameToIndexMap.put(attrs.getAttributeName(i), i);
+    private void populateAttributes(Context context, AttributeSet attrs) {
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.sound_affect);
+        if (a != null) {
+            try {
+                trackResourceId = a.getResourceId(R.styleable.sound_affect_trackResource, -1);
+                showPrevButton = a.getBoolean(R.styleable.sound_affect_showPrevButton, false);
+                positionIndicatorShape = a.getString(R.styleable.sound_affect_positionIndicatorShape);
+                positionIndicatorColor = a.getColor(R.styleable.sound_affect_positionIndicatorColor, -1);
+                seekBarColor = a.getColor(R.styleable.sound_affect_seekBarColor, -1);
+                playButtonColor = a.getColor(R.styleable.sound_affect_playButtonColor, -1);
+                prevButtonColor = a.getColor(R.styleable.sound_affect_prevButtonColor, -1);
+            } finally {
+                a.recycle();
             }
-        }
-
-        trackResourceId = attrs.getAttributeResourceValue(APP_NS, ATTR_TRACK_RESOURCE, -1);
-        showPrevButton = attrs.getAttributeBooleanValue(APP_NS, ATTR_SHOW_PREV_BUTTON, false);
-
-        if (attrNameToIndexMap.containsKey(ATTR_INDICATOR_SHAPE)) {
-            positionIndicatorShape = attrs.getAttributeValue(attrNameToIndexMap.get(ATTR_INDICATOR_SHAPE));
         }
     }
 
@@ -129,15 +125,23 @@ public class SoundAffect extends View {
         textPaint.setColor(Color.BLACK);
         textPaint.setTextSize(40.0f);
 
-        buttonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        buttonPaint.setColor(Color.WHITE);
+        playButtonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        prevButtonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        if (playButtonColor != -1) {
+            playButtonPaint.setColorFilter(new PorterDuffColorFilter(playButtonColor, PorterDuff.Mode.SRC_IN));
+        }
+
+        if (prevButtonColor != -1) {
+            prevButtonPaint.setColorFilter(new PorterDuffColorFilter(prevButtonColor, PorterDuff.Mode.SRC_IN));
+        }
 
         seekPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        seekPaint.setColor(Color.BLACK);
+        seekPaint.setColor(seekBarColor != -1 ? seekBarColor : Color.BLACK);
         seekPaint.setStyle(Paint.Style.FILL);
 
         notchPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        notchPaint.setColor(Color.RED);
+        notchPaint.setColor(positionIndicatorColor != -1 ? positionIndicatorColor : Color.RED);
         notchPaint.setStyle(Paint.Style.FILL);
 
         debugPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -147,13 +151,8 @@ public class SoundAffect extends View {
 
     private void setupUIElements() {
         playButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_play_circle_outline_black_24dp);
-        //playButtonImage = Bitmap.createScaledBitmap(playButtonImage, playButtonImage.getWidth() * 2, playButtonImage.getHeight() * 2, false);
-
         pauseButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_pause_circle_outline_black_24dp);
-        //pauseButtonImage = Bitmap.createScaledBitmap(pauseButtonImage, pauseButtonImage.getWidth() * 2, pauseButtonImage.getHeight() * 2, false);
-
         prevButtonImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_skip_previous_black_24dp);
-        //prevButtonImage = Bitmap.createScaledBitmap(prevButtonImage, prevButtonImage.getWidth() * 2, prevButtonImage.getHeight() * 2, false);
 
         if (isInEditMode()) {
             return;
@@ -358,17 +357,17 @@ public class SoundAffect extends View {
 
     private void drawControls(Canvas canvas) {
         if (isInEditMode()) {
-            canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+            canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, playButtonPaint);
         } else {
             if (mediaManager.isPlaying()) {
-                canvas.drawBitmap(pauseButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+                canvas.drawBitmap(pauseButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, playButtonPaint);
             } else {
-                canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, buttonPaint);
+                canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, playButtonPaint);
             }
         }
 
         if (showPrevButton) {
-            canvas.drawBitmap(prevButtonImage, prevButtonRect.left, prevButtonRect.top, buttonPaint);
+            canvas.drawBitmap(prevButtonImage, prevButtonRect.left, prevButtonRect.top, prevButtonPaint);
         }
     }
 
