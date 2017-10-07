@@ -127,7 +127,7 @@ public class SoundAffect extends View {
     private void setupPaints() {
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(Color.BLACK);
-        textPaint.setTextSize(50.0f);
+        textPaint.setTextSize(40.0f);
 
         buttonPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         buttonPaint.setColor(Color.WHITE);
