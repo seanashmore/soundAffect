@@ -170,7 +170,7 @@ public class SoundAffect extends View {
     private void setupDrawingPositions() {
         int seekLeft = getPaddingLeft();
         int seekTop = getHeightWithPadding() / 3;
-        int seekRight = getWidthWithPadding();
+        int seekRight = getWidth() - getPaddingRight();
         int seekBottom = seekTop + SEEK_AND_NOTCH_THICKNESS;
 
         int centerLeft = (getWidthWithPadding() / 2) - (playButtonImage.getWidth() / 2);
@@ -275,13 +275,17 @@ public class SoundAffect extends View {
     }
 
     public void play() {
-        mediaManager.play();
-        currentPositionHandler.post(currentPositionRunnable);
+        if (mediaManager.isPrepared()) {
+            mediaManager.play();
+            currentPositionHandler.post(currentPositionRunnable);
+        }
     }
 
     public void pause() {
-        mediaManager.pause();
-        currentPositionHandler.removeCallbacks(currentPositionRunnable);
+        if (mediaManager.isPlaying()) {
+            mediaManager.pause();
+            currentPositionHandler.removeCallbacks(currentPositionRunnable);
+        }
     }
 
     public void reset() {
@@ -346,7 +350,6 @@ public class SoundAffect extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        canvas.drawColor(Color.WHITE);
         drawTimestamps(canvas);
         drawSeekBar(canvas);
         drawControls(canvas);
