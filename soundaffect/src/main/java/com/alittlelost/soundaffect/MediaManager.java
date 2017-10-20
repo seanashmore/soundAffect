@@ -37,7 +37,16 @@ public class MediaManager {
                 audioAttributes.setUsage(AudioAttributes.USAGE_MEDIA);
                 mediaPlayer.setAudioAttributes(audioAttributes.build());
             }
-            mediaPlayer.prepare();
+
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                    prepared = true;
+                }
+            });
+
+            mediaPlayer.prepareAsync();
+
         } catch (IOException e) {
             Log.e(TAG, "IOException when playing from URL: " + e);
         } catch (Exception e) {

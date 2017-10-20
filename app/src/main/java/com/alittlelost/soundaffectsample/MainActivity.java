@@ -15,5 +15,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         soundAffect = findViewById(R.id.soundAffect);
+        soundAffect.loadUrl("http://www.sample-videos.com/audio/mp3/crowd-cheering.mp3");
     }
 }
