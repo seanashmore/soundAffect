@@ -63,6 +63,8 @@ public class SoundAffect extends View {
     //App attrs
     private int trackResourceId, positionIndicatorColor, seekBarColor, playButtonColor, prevButtonColor = -1;
     private boolean showPrevButton = false;
+    private boolean showCurrentTime = true;
+    private boolean showDuration = true;
     private String positionIndicatorShape = INDICATOR_NOTCH;
 
     private Runnable currentPositionRunnable = new Runnable() {
@@ -109,6 +111,8 @@ public class SoundAffect extends View {
             try {
                 trackResourceId = a.getResourceId(R.styleable.sound_affect_trackResource, -1);
                 showPrevButton = a.getBoolean(R.styleable.sound_affect_showPrevButton, false);
+                showCurrentTime = a.getBoolean(R.styleable.sound_affect_showCurrentTime, true);
+                showDuration = a.getBoolean(R.styleable.sound_affect_showDuration, true);
                 positionIndicatorShape = a.getString(R.styleable.sound_affect_positionIndicatorShape);
                 positionIndicatorColor = a.getColor(R.styleable.sound_affect_positionIndicatorColor, -1);
                 seekBarColor = a.getColor(R.styleable.sound_affect_seekBarColor, -1);
@@ -383,12 +387,16 @@ public class SoundAffect extends View {
     }
 
     private void drawTimestamps(Canvas canvas) {
-        canvas.drawText(getFormattedDuration(), seekbarRect.right - textPaint.measureText(getFormattedDuration()),
-                seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM,
-                textPaint);
+        if (showDuration) {
+            canvas.drawText(getFormattedDuration(), seekbarRect.right - textPaint.measureText(getFormattedDuration()),
+                    seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM,
+                    textPaint);
+        }
 
-        canvas.drawText(getCurrentTime(), seekbarRect.left,
-                seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM, textPaint);
+        if (showCurrentTime) {
+            canvas.drawText(getCurrentTime(), seekbarRect.left,
+                    seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM, textPaint);
+        }
     }
 
     private void drawDebug(Canvas canvas) {

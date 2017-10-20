@@ -3,6 +3,8 @@
     <declare-styleable name="sound_affect">
         <attr name="trackResource" format="integer" />
         <attr name="showPrevButton" format="boolean" />
+        <attr name="showDuration" format="boolean" /> <!-- default true -->
+        <attr name="showCurrentTime" format="boolean" /> <!-- default true -->
         <attr name="positionIndicatorShape" format="string" /> <!-- Notch (Vertical line) / Dot (Filled circle) -->
         <attr name="positionIndicatorColor" format="color" />
         <attr name="seekBarColor" format="color" />
