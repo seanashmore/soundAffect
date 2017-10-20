@@ -93,6 +93,6 @@ public class MediaManager {
     }
 
     public int getDuration() {
-        return mediaPlayer != null ? mediaPlayer.getDuration() : 0;
+        return (mediaPlayer != null && mediaPlayer.getDuration() != -1) ? mediaPlayer.getDuration() : 0;
     }
 }

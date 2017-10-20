@@ -43,8 +43,6 @@
         app:positionIndicatorShape="dot"
         app:prevButtonColor="@android:color/holo_red_dark"
         app:seekBarColor="@android:color/holo_green_dark"
-        app:showCurrentTime="false"
-        app:showDuration="false"
         app:showPrevButton="true" />
     <!-- app:trackResource="@raw/test" /> -->
 

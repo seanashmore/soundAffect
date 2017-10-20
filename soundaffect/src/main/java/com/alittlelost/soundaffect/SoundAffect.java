@@ -387,7 +387,7 @@ public class SoundAffect extends View {
     }
 
     private void drawTimestamps(Canvas canvas) {
-        if (showDuration) {
+        if (showDuration && mediaManager.isPrepared()) {
             canvas.drawText(getFormattedDuration(), seekbarRect.right - textPaint.measureText(getFormattedDuration()),
                     seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM,
                     textPaint);
