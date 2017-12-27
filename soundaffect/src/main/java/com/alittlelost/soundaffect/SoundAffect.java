@@ -1,6 +1,9 @@
 package com.alittlelost.soundaffect;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,6 +15,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -28,6 +32,25 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class SoundAffect extends View {
+
+    private MediaService mediaService;
+    private boolean isBound = false;
+    private OnBindAttemptCompleteCallback onBindAttemptCompleteCallback;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mediaService = ((MediaService.LocalBinder) service).getService();
+            Toast.makeText(getContext(), "Service connected", Toast.LENGTH_SHORT).show();
+            onBindAttemptCompleteCallback.onSuccess();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mediaService = null;
+            Toast.makeText(getContext(), "Service disconnected", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     private static final String TAG = "SoundAffect";
     private final String INDICATOR_DOT = "dot";
@@ -55,8 +78,6 @@ public class SoundAffect extends View {
     private Rect playPauseButtonRect, prevButtonRect;
     private Rect seekbarRect, seekbarTouchRect;
     private Rect notchRect, notchTouchRect, tapRect;
-
-    private MediaManager mediaManager;
 
     private boolean isSeeking, wasPlayingBeforeSeek = false;
 
@@ -98,26 +119,56 @@ public class SoundAffect extends View {
         }
 
         this.context = context;
-        this.mediaManager = new MediaManager(context);
 
         if (trackResourceId != -1) {
             loadResource(trackResourceId);
         }
     }
 
+    public interface OnBindAttemptCompleteCallback {
+        void onSuccess();
+
+        void onFailure();
+    }
+
+    public void bindService(OnBindAttemptCompleteCallback callback) {
+        ComponentName componentName = getContext().startService(new Intent(getContext(), MediaService.class));
+
+        if (componentName != null) {
+
+            this.onBindAttemptCompleteCallback = callback;
+
+            isBound = getContext().bindService(new Intent(getContext(), MediaService.class),
+                    serviceConnection,
+                    Context.BIND_AUTO_CREATE);
+
+
+            if (!isBound) {
+                callback.onFailure();
+            }
+        }
+    }
+
+    public void unbindService() {
+        if (isBound) {
+            getContext().unbindService(serviceConnection);
+            isBound = false;
+        }
+    }
+
     private void populateAttributes(Context context, AttributeSet attrs) {
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.sound_affect);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SoundAffect);
         if (a != null) {
             try {
-                trackResourceId = a.getResourceId(R.styleable.sound_affect_trackResource, -1);
-                showPrevButton = a.getBoolean(R.styleable.sound_affect_showPrevButton, false);
-                showCurrentTime = a.getBoolean(R.styleable.sound_affect_showCurrentTime, true);
-                showDuration = a.getBoolean(R.styleable.sound_affect_showDuration, true);
-                positionIndicatorShape = a.getString(R.styleable.sound_affect_positionIndicatorShape);
-                positionIndicatorColor = a.getColor(R.styleable.sound_affect_positionIndicatorColor, -1);
-                seekBarColor = a.getColor(R.styleable.sound_affect_seekBarColor, -1);
-                playButtonColor = a.getColor(R.styleable.sound_affect_playButtonColor, -1);
-                prevButtonColor = a.getColor(R.styleable.sound_affect_prevButtonColor, -1);
+                trackResourceId = a.getResourceId(R.styleable.SoundAffect_trackResource, -1);
+                showPrevButton = a.getBoolean(R.styleable.SoundAffect_showPrevButton, false);
+                showCurrentTime = a.getBoolean(R.styleable.SoundAffect_showCurrentTime, true);
+                showDuration = a.getBoolean(R.styleable.SoundAffect_showDuration, true);
+                positionIndicatorShape = a.getString(R.styleable.SoundAffect_positionIndicatorShape);
+                positionIndicatorColor = a.getColor(R.styleable.SoundAffect_positionIndicatorColor, -1);
+                seekBarColor = a.getColor(R.styleable.SoundAffect_seekBarColor, -1);
+                playButtonColor = a.getColor(R.styleable.SoundAffect_playButtonColor, -1);
+                prevButtonColor = a.getColor(R.styleable.SoundAffect_prevButtonColor, -1);
             } finally {
                 a.recycle();
             }
@@ -222,11 +273,7 @@ public class SoundAffect extends View {
     }
 
     private void moveNotchRect(float left) {
-        if (left < seekbarRect.left) {
-            return;
-        }
-
-        if (left > seekbarRect.right) {
+        if (left < seekbarRect.left || left > seekbarRect.right) {
             return;
         }
 
@@ -261,15 +308,15 @@ public class SoundAffect extends View {
     }
 
     public void loadUrl(String url) {
-        mediaManager.loadUrl(url);
+        mediaService.loadUrl(url);
     }
 
     private void loadResource(int resourceId) {
-        mediaManager.loadResource(resourceId);
+        mediaService.loadResource(resourceId);
     }
 
     public void togglePlayPause() {
-        if (mediaManager.isPlaying()) {
+        if (mediaService.isPlaying()) {
             pause();
         } else {
             play();
@@ -278,26 +325,26 @@ public class SoundAffect extends View {
     }
 
     public void play() {
-        if (mediaManager.isPrepared()) {
-            mediaManager.play();
+        if (mediaService.isPrepared()) {
+            mediaService.play();
             currentPositionHandler.post(currentPositionRunnable);
         }
     }
 
     public void pause() {
-        if (mediaManager.isPlaying()) {
-            mediaManager.pause();
+        if (mediaService.isPlaying()) {
+            mediaService.pause();
             currentPositionHandler.removeCallbacks(currentPositionRunnable);
         }
     }
 
     public void reset() {
-        if (mediaManager.isPlaying()) {
+        if (mediaService.isPlaying()) {
             pause();
-            mediaManager.reset();
+            mediaService.reset();
             play();
         } else {
-            mediaManager.reset();
+            mediaService.reset();
             updateNotchRect(getPercentageComplete());
             invalidate();
         }
@@ -353,6 +400,10 @@ public class SoundAffect extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        if (!isBound && mediaService != null) {
+            return;
+        }
+
         drawTimestamps(canvas);
         drawSeekBar(canvas);
         drawControls(canvas);
@@ -363,7 +414,7 @@ public class SoundAffect extends View {
         if (isInEditMode()) {
             canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, playButtonPaint);
         } else {
-            if (mediaManager.isPlaying()) {
+            if (mediaService.isPlaying()) {
                 canvas.drawBitmap(pauseButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, playButtonPaint);
             } else {
                 canvas.drawBitmap(playButtonImage, playPauseButtonRect.left, playPauseButtonRect.top, playButtonPaint);
@@ -387,7 +438,7 @@ public class SoundAffect extends View {
     }
 
     private void drawTimestamps(Canvas canvas) {
-        if (showDuration && mediaManager.isPrepared()) {
+        if (showDuration && mediaService.isPrepared()) {
             canvas.drawText(getFormattedDuration(), seekbarRect.right - textPaint.measureText(getFormattedDuration()),
                     seekbarRect.top - TIMESTAMP_MARGIN_BOTTOM,
                     textPaint);
@@ -430,15 +481,11 @@ public class SoundAffect extends View {
             }
 
             if (notchTouchRect.contains(tapRect)) {
-                if (mediaManager.isPlaying()) {
-                    wasPlayingBeforeSeek = true;
-                } else {
-                    wasPlayingBeforeSeek = false;
-                }
+                wasPlayingBeforeSeek = mediaService.isPlaying();
 
                 isSeeking = true;
 
-                if (mediaManager.isPlaying()) {
+                if (mediaService.isPlaying()) {
                     pause();
                 }
             }
@@ -472,16 +519,16 @@ public class SoundAffect extends View {
     //Work out current track position based on the current position of the 'notch'
     //relative to the seekBarRect
     private void updateCurrentPosition() {
-        if (mediaManager.isPrepared()) {
-
+        if (mediaService.isPrepared()) {
             float currentNotchPos = notchRect.left;
             float seekEnd = seekbarRect.right;
             float percentage = (currentNotchPos / seekEnd) * 100.0f;
-            float duration = mediaManager.getDuration();
+            float duration = mediaService.getDuration();
             float newPos = (duration / 100.0f) * percentage;
 
             //Update the mediaPlayer and start playback from that point
-            mediaManager.setCurrentPosition(Math.round(newPos));
+            //mediaManager.setCurrentPosition(Math.round(newPos));
+            mediaService.setCurrentPosition(Math.round(newPos));
         } else {
             Log.i(TAG, "Not prepared!!");
         }
@@ -492,11 +539,11 @@ public class SoundAffect extends View {
             return "01:00";
         }
 
+        int duration = mediaService.getDuration();
         return String.format(Locale.getDefault(), "%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(mediaManager.getDuration()),
-                TimeUnit.MILLISECONDS.toSeconds(mediaManager.getDuration()) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(mediaManager.getDuration()))
-        );
+                TimeUnit.MILLISECONDS.toMinutes(duration),
+                TimeUnit.MILLISECONDS.toSeconds(duration) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(duration)));
     }
 
     private String getCurrentTime() {
@@ -504,16 +551,16 @@ public class SoundAffect extends View {
             return "00:00";
         }
 
+        int currentPosition = mediaService.getCurrentPosition();
         return String.format(Locale.getDefault(), "%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(mediaManager.getCurrentPosition()),
-                TimeUnit.MILLISECONDS.toSeconds(mediaManager.getCurrentPosition()) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(mediaManager.getCurrentPosition()))
-        );
+                TimeUnit.MILLISECONDS.toMinutes(currentPosition),
+                TimeUnit.MILLISECONDS.toSeconds(currentPosition) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentPosition)));
     }
 
     private int getPercentageComplete() {
-        float current = mediaManager.getCurrentPosition();
-        float duration = mediaManager.getDuration();
+        float current = mediaService.getCurrentPosition();
+        float duration = mediaService.getDuration();
         float percentage = (current / duration) * 100.0f;
         //Log.i(TAG, "Percentage: " + percentage + " Returning: " + Math.round(percentage));
         return Math.round(percentage);

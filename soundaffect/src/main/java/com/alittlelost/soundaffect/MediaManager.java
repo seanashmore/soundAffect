@@ -12,7 +12,7 @@ import java.io.IOException;
  * Created by seanashmore on 20/09/2017.
  */
 
-public class MediaManager {
+class MediaManager {
 
     private static final String TAG = "MediaManager";
     private MediaPlayer mediaPlayer;
@@ -20,11 +20,11 @@ public class MediaManager {
 
     private boolean prepared = false;
 
-    public MediaManager(Context context) {
+    MediaManager(Context context) {
         this.context = context;
     }
 
-    public void loadUrl(String url) {
+    void loadUrl(String url) {
         try {
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setDataSource(url);
@@ -54,7 +54,7 @@ public class MediaManager {
         }
     }
 
-    public void loadResource(int resourceId) {
+    void loadResource(int resourceId) {
         mediaPlayer = MediaPlayer.create(context, resourceId);
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -64,35 +64,35 @@ public class MediaManager {
         });
     }
 
-    public boolean isPrepared() {
+    boolean isPrepared() {
         return prepared;
     }
 
-    public int getCurrentPosition() {
+    int getCurrentPosition() {
         return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
     }
 
-    public void setCurrentPosition(int currentPosition) {
+    void setCurrentPosition(int currentPosition) {
         mediaPlayer.seekTo(currentPosition);
     }
 
-    public void reset() {
+    void reset() {
         mediaPlayer.seekTo(0);
     }
 
-    public boolean isPlaying() {
+    boolean isPlaying() {
         return mediaPlayer != null && mediaPlayer.isPlaying();
     }
 
-    public void play() {
+    void play() {
         mediaPlayer.start();
     }
 
-    public void pause() {
+    void pause() {
         mediaPlayer.pause();
     }
 
-    public int getDuration() {
+    int getDuration() {
         return (mediaPlayer != null && mediaPlayer.getDuration() != -1) ? mediaPlayer.getDuration() : 0;
     }
 }

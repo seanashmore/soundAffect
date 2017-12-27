@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="sound_affect">
+    <declare-styleable name="SoundAffect">
         <attr name="trackResource" format="integer" />
         <attr name="showPrevButton" format="boolean" />
         <attr name="showDuration" format="boolean" /> <!-- default true -->
