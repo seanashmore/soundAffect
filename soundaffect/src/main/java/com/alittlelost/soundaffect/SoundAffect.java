@@ -400,7 +400,7 @@ public class SoundAffect extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (!isBound && mediaService != null) {
+        if (!isBound || mediaService != null) {
             return;
         }
 
